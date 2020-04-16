@@ -1,0 +1,10 @@
+{
+  "modules": [
+    "Example",
+    "Help",
+    "Hostels",
+    "Receptions",
+    "Moderation",
+    "Events"
+  ]
+}
