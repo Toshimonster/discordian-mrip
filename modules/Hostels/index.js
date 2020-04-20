@@ -20,7 +20,7 @@ module.exports = {
             sql.statements.Hostels.createHostel.run({
               channelId: msg.arguments[0],
               guildId: msg.guild.id,
-              roomName: msg.arguments.slice(2).join(" ") || "{nickname}'s room",
+              roomName: msg.arguments.slice(2).join(" ") || "{username}'s room",
             });
             msg.channel.tempSend("Hostel Made!");
           } else {
