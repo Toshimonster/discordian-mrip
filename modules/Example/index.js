@@ -1,4 +1,5 @@
 const debug = require("log4js").getLogger("Bot:Example");
+const discord = require("discord.js");
 debug.level = process.env.DEBUG;
 let Bot;
 
@@ -14,7 +15,7 @@ module.exports = {
     },
   },
 
-  Init: (Bot) => {
-    Bot = Bot;
+  Init: (bot) => {
+    Bot = bot;
   },
 };

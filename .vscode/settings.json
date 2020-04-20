@@ -1,0 +1,10 @@
+{
+    "sql-formatter.uppercase": true,
+    "sqltools.connections": [
+        {
+            "database": "${workspaceFolder}/Sql/db.sqlite3",
+            "dialect": "SQLite",
+            "name": "DB"
+        }
+    ]
+}
