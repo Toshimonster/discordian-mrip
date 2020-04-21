@@ -294,9 +294,9 @@ module.exports = {
                     })
                     .catch((e) => debug.warn(e));
                 })
-                .catch((e) => debug.warn(e));
+                .catch((e) => debug.warn(`Could not find message! Assuming it has been deleted. ${e.msg}`));
             })
-            .catch((e) => debug.warn(e));
+            .catch((e) => debug.warn(`Could not find channel! Assuming it has been deleted.${e.msg}`));
         } catch (e) {
           debug.warn(e);
         }
@@ -309,7 +309,7 @@ module.exports = {
 
     Bot.client.setInterval(() => {
       if (Bot.client.uptime == 0) return;
-      debug.info("Iteration executing");
+      //debug.info("Iteration executing");
 
       let events = {};
       Bot.sql.statements.Events.getExpiredEvents.all().forEach((event) => {
