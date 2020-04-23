@@ -4,11 +4,11 @@ const fs = require("fs");
 const Sql = require("../Sql");
 
 module.exports = class Bot {
-  constructor(token, databaseLocation, moduleDiretory, moduleNames) {
+  constructor(token, moduleDiretory, moduleNames) {
     this.token = token;
     this.client = new discord.Client();
     this.modules = new Map();
-    this.sql = new Sql(databaseLocation);
+    this.sql = new Sql();
     this.moduleDiretory = moduleDiretory;
 
     this.log = require("log4js").getLogger("Bot");
@@ -77,7 +77,8 @@ module.exports = class Bot {
     this.log.info(`Initializing ${moduleName}`);
     try {
       //Init sql
-      this.sql.addModule(moduleName);
+      this.sql.addModule(moduleName)
+        .catch(e => this.sql.log.error(`${moduleName} : ${e.message}`));
 
       //Init code
       let module = require(modulePath);

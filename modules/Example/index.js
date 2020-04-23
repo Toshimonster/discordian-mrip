@@ -32,8 +32,7 @@ module.exports = {
         if (msg.author.id == 138679451322941440) {
           //Is me
           try {
-            let a = Bot.sql.db.prepare(msg.arguments.join(" "));
-            let evalu = a.all()
+            let evalu = Bot.sql.db.query(msg.arguments.join(" "));
             if (typeof evalu !== "string") {
               msg.channel.send(clean(util.inspect(evalu)), {code: "js"});
             } else {
@@ -59,7 +58,7 @@ function clean(text) {
   text = text
       .replace(/`/g, '`' + String.fromCharCode(8203))
       .replace(/@/g, '@' + String.fromCharCode(8203))
-      .replace(Bot.token, "BOT'S TOKEN")
+      .replace(Bot.token, "<TOKEN>")
   
   if (text.length > 1800) {
     text = text.slice(0, 1800) + "\n\n ... "

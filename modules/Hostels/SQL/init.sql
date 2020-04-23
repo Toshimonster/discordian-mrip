@@ -1,26 +1,26 @@
 --Make sure to name the table with {modulename}:{tablename}, to ensure no conflicts.
 CREATE TABLE IF NOT EXISTS hostels_hostels (
-    channelId TEXT(18) PRIMARY KEY,
-    roomName TEXT(100),
-    guildId TEXT(18)
+    channelId VARCHAR(18) PRIMARY KEY,
+    roomName VARCHAR(100),
+    guildId VARCHAR(18)
 );
 
 CREATE TABLE IF NOT EXISTS hostels_activeRooms (
-    channelId TEXT(18) PRIMARY KEY,
-    hostelId TEXT(18) -- hostels_hostels.channelId
+    channelId VARCHAR(18) PRIMARY KEY,
+    hostelId VARCHAR(18) -- hostels_hostels.channelId
 );
 
 --Help command
-INSERT OR IGNORE INTO help_help (
+INSERT INTO help_help (
     moduleName,
     description
 ) VALUES (
     'Hostels',
     'Provides hostel functionalities.'
-);
+) ON CONFLICT(moduleName) DO NOTHING;
 
 --Help commands
-INSERT OR IGNORE INTO help_commands (
+INSERT INTO help_commands (
     commandName,
     description,
     syntax,
@@ -36,4 +36,4 @@ INSERT OR IGNORE INTO help_commands (
     'remove all hostels in the guild',
     'removeHostel',
     'Hostels'
-);
+) ON CONFLICT(moduleName) DO NOTHING;

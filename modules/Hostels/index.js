@@ -17,11 +17,14 @@ module.exports = {
             msg.guild.channels.cache.has(msg.arguments[0]) &&
             msg.guild.channels.resolve(msg.arguments[0]).type === "voice"
           ) {
-            sql.statements.Hostels.createHostel.run({
-              channelId: msg.arguments[0],
-              guildId: msg.guild.id,
-              roomName: msg.arguments.slice(2).join(" ") || "{displayName}'s room",
-            });
+            sql.statements.Hostels.createHostel
+              .run({
+                channelId: msg.arguments[0],
+                guildId: msg.guild.id,
+                roomName:
+                  msg.arguments.slice(2).join(" ") || "{displayName}'s room",
+              })
+              .catch((e) => debug.error(e));
             msg.channel.tempSend("Hostel Made!");
           } else {
             msg.channel.tempSend("Invalid argument!");
@@ -36,9 +39,11 @@ module.exports = {
             "You do not have permission to run this command."
           );
         } else {
-          sql.statements.Hostels.removeHostels.run({
-            guildId: msg.guild.id,
-          });
+          sql.statements.Hostels.removeHostels
+            .run({
+              guildId: msg.guild.id,
+            })
+            .catch((e) => debug.error(e));
           msg.channel.tempSend("Done!");
         }
       });
@@ -48,40 +53,44 @@ module.exports = {
       if (nState.channel) {
         //Joined Channel
         sql.statements.Hostels.getHostel
-          .all({
+          .run({
             channelId: nState.channel.id,
             guildId: nState.guild.id,
           })
-          .forEach((data) => {
-            let name = data.roomName;
-            //Find all cases of {text} and replace with nState.member[text]
-            name.match(/{(.*?)}/g).forEach((param) => {
-              name = name.replace(param, nState.member[param.slice(1, -1)]);
-            });
-
-            nState.guild.channels
-              .create(name, {
-                type: "voice",
-                position: nState.channel.position + 1,
-                parent: nState.channel.parent,
-                permissionOverwrites: [
-                  {
-                    id: nState.member.id,
-                    allow: "MANAGE_CHANNELS",
-                  },
-                ],
-                reason: "Hostel Module",
-              })
-              .then((channel) => {
-                nState.setChannel(channel).catch(debug.error);
-                sql.statements.Hostels.createActiveRoom.run({
-                  channelId: channel.id,
-                  guildId: channel.guild.id,
-                });
-                debug.info(`Added ${channel.name}!`);
+          .then((res) => {
+            res.rows.forEach((data) => {
+              let name = data.roomName;
+              //Find all cases of {text} and replace with nState.member[text]
+              name.match(/{(.*?)}/g).forEach((param) => {
+                name = name.replace(param, nState.member[param.slice(1, -1)]);
               });
+
+              nState.guild.channels
+                .create(name, {
+                  type: "voice",
+                  position: nState.channel.position + 1,
+                  parent: nState.channel.parent,
+                  permissionOverwrites: [
+                    {
+                      id: nState.member.id,
+                      allow: "MANAGE_CHANNELS",
+                    },
+                  ],
+                  reason: "Hostel Module",
+                })
+                .then((channel) => {
+                  nState.setChannel(channel).catch(debug.error);
+                  sql.statements.Hostels.createActiveRoom.run({
+                    channelId: channel.id,
+                    guildId: channel.guild.id,
+                  })
+                    .catch(e => debug.error(e));
+                  debug.info(`Added ${channel.name}!`);
+                });
+            });
           });
-      } else if (oState.channel) {
+      }
+      if (oState.channel) {
         //Left Channel
         if (oState.channel.members.size === 0) {
           sql.statements.Hostels.getActiveRooms
@@ -92,30 +101,37 @@ module.exports = {
               oState.channel.delete().catch(debug.error);
               sql.statements.Hostels.removeActiveRoom.run({
                 channelId: oState.channel.id,
-              });
+              })
+                .catch(e => debug.error(e))
             });
         }
       }
     },
 
     ready: () => {
-      sql.statements.Hostels.getAllActiveRooms.all().forEach((room) => {
-        Bot.client.channels
-          .fetch(room.channelId)
-          .then((channel) => {
-            if (channel.members.size == 0) {
-              channel.delete();
-              sql.statements.Hostels.removeActiveRoom.run({
-                channelId: room.channelId,
+      sql.statements.Hostels.getAllActiveRooms.run()
+        .then(res => {
+          res.rows.forEach((room) => {
+            Bot.client.channels
+              .fetch(room.channelId)
+              .then((channel) => {
+                debug.info(`Deleting active Hostel room ${channel.id} if exists`);
+                if (channel.members.size == 0) {
+                  channel.delete();
+                  sql.statements.Hostels.removeActiveRoom.run({
+                    channelId: room.channelId,
+                  })
+                  . catch(e => debug.error(e))
+                }
+              })
+              .catch(() => {
+                sql.statements.Hostels.removeActiveRoom.run({
+                  channelId: room.channelId,
+                })
+                  .catch(e => debug.error(e))
               });
-            }
-          })
-          .catch(() => {
-            sql.statements.Hostels.removeActiveRoom.run({
-              channelId: room.channelId,
-            });
           });
-      });
+        })
     },
   },
 

@@ -18,7 +18,6 @@ module.exports = class Controller {
 
     this.Bot = new BotDef(
       process.env.TOKEN,
-      process.env.DATABASE_LOCATION,
       moduleDirectory,
       this.modules
     );

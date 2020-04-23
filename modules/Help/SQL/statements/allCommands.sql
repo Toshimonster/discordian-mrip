@@ -4,4 +4,4 @@ SELECT
     description,
     syntax
 FROM help_commands
-WHERE moduleName = $moduleName;
+WHERE moduleName = $moduleName ;

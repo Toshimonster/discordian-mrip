@@ -1,39 +1,38 @@
 --Make sure to name the table with {modulename}:{tablename}, to ensure no conflicts.
 CREATE TABLE IF NOT EXISTS events_eventBoards (
-    channelId TEXT(18) UNIQUE PRIMARY KEY,
-    guildId TEXT(18) UNIQUE
+    channelId VARCHAR(18) UNIQUE PRIMARY KEY,
+    guildId VARCHAR(18) UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS events_events (
-    messageId TEXT(18) PRIMARY KEY,
-    eventBoardId TEXT(18),
+    messageId VARCHAR(18) PRIMARY KEY,
+    eventBoardId VARCHAR(18),
     -- events_eventBoards.channelId
-    name TEXT(30),
-    description TEXT(100),
-    time DATETIME,
+    name VARCHAR(30),
+    description VARCHAR(100),
+    time TIMESTAMP WITH TIME ZONE,
     maxPlayers INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS events_signups (
-    userId TEXT(18),
-    eventId TEXT(18),
+    userId VARCHAR(18),
+    eventId VARCHAR(18),
     -- events_events.messageId
     alternative BOOLEAN,
     PRIMARY KEY (userId, eventId)
 );
 
 --Help command
-INSERT
-    OR IGNORE INTO help_help (moduleName, description)
+INSERT INTO help_help (moduleName, description)
 VALUES
     (
         'Events',
         'Provides event functionality!'
-    );
+    )
+ON CONFLICT(moduleName) DO NOTHING;
 
 --Help commands
-INSERT
-    OR IGNORE INTO help_commands (
+INSERT INTO help_commands (
         commandName,
         description,
         syntax,
@@ -57,4 +56,5 @@ VALUES
         'Posts an event to the guilds event board',
         'postEvent {name}|{description}|{dd/mm/yyyy hh/mm}|{max players}',
         'Events'
-    );
+    )
+ON CONFLICT(commandName) DO NOTHING;

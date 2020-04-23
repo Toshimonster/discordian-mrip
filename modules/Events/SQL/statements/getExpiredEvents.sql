@@ -7,4 +7,4 @@ SELECT
 FROM events_events
 LEFT JOIN events_signups ON events_signups.eventId = events_events.messageId
 WHERE
-  events_events.time < datetime('now', 'localtime');
+  events_events.time < NOW();

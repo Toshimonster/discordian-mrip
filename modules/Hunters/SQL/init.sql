@@ -1,9 +1,9 @@
 --Make sure to name the table with {modulename}:{tablename}, to ensure no conflicts.
 CREATE TABLE IF NOT EXISTS hunters_profiles (
     --Snowflakes (discord id's) are 18 characters/digits long.
-    userId TEXT(18) PRIMARY KEY,
-    hunterName TEXT(100),
-    palicoName TEXT(100),
+    userId VARCHAR(18) PRIMARY KEY,
+    hunterName VARCHAR(100),
+    palicoName VARCHAR(100),
     /*
     0   - NONE
     1   - GREAT SWORD
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS hunters_profiles (
     13  - HEAVY BOWGUN
     14  - BOW
     */
-    mainWeapon TEXT(18),
+    mainWeapon VARCHAR(18),
     HR INT(),
     MR INT(),
     /*
