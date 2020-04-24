@@ -19,4 +19,4 @@ INSERT INTO help_commands (
     'Purges messages in a channel',
     'Purge {numberOfMessages or 500}',
     'Moderation'
-) ON CONFLICT(moduleName) DO NOTHING;
+) ON CONFLICT(commandName) DO NOTHING;

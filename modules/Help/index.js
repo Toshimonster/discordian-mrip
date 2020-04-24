@@ -15,7 +15,6 @@ module.exports = {
           let p = sql.statements.Help.allModules.run().then((res) => {
             //Get unique array items
             res.rows.forEach((module) => {
-              console.log(module)
               embed.addField(module.modulename, module.description);
             });
             embed.setFooter(
@@ -48,11 +47,11 @@ module.exports = {
           promises.push(p);
         }
         if (msg.channel.type !== "dm") {
-          msg.tempReply("\nSent you a DM with details!").catch(debug.error);
+          msg.tempReply("\nSent you a DM with details!").catch(e => debug.error(e));
         }
         Promise.all(promises)
           .then(() => {
-            msg.author.send(embed).catch(debug.error);
+            msg.author.send(embed).catch(e => debug.error(e));
           })
       });
     },

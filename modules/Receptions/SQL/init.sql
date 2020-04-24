@@ -29,4 +29,4 @@ INSERT INTO help_commands (
     'Remove all new roles set by this module',
     'removeAllRoles',
     'Receptions'
-) ON CONFLICT(moduleName) DO NOTHING;
+) ON CONFLICT(commandName) DO NOTHING;

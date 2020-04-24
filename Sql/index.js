@@ -18,12 +18,13 @@ class Stmt {
     }
 
     run(parameters={}) {
+
       this.log.info(`Running SQL`)
       return new Promise((resolve, reject) => {
         let temp = this.query
         let arr = []
 
-        let matched = temp.match(/\$[^ ]+/g) || []
+        let matched = temp.match(/\$[^ ,)\n]+/g) || []
         matched.forEach(key => {
           let value = parameters[key.slice(1)]
           if (!value) {
@@ -34,6 +35,7 @@ class Stmt {
           arr.push(value)
         })
 
+
         this.parent.db.query(temp, arr)
           .then(resolve)
           .catch(reject)
@@ -43,7 +45,7 @@ class Stmt {
 
 class Sql {
   constructor(databaseURI = process.env.DATABASE_URL) {
-    this.db = new postgres.Client({
+    this.db = new postgres.Pool({
       connectionString: databaseURI,
       ssl: !process.env.DB_NOT_SSL,
     });

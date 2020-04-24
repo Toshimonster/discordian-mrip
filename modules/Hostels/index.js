@@ -59,7 +59,7 @@ module.exports = {
           })
           .then((res) => {
             res.rows.forEach((data) => {
-              let name = data.roomName;
+              let name = data.roomname;
               //Find all cases of {text} and replace with nState.member[text]
               name.match(/{(.*?)}/g).forEach((param) => {
                 name = name.replace(param, nState.member[param.slice(1, -1)]);
@@ -79,7 +79,7 @@ module.exports = {
                   reason: "Hostel Module",
                 })
                 .then((channel) => {
-                  nState.setChannel(channel).catch(debug.error);
+                  nState.setChannel(channel).catch(e => debug.error(e));
                   sql.statements.Hostels.createActiveRoom.run({
                     channelId: channel.id,
                     guildId: channel.guild.id,
@@ -94,16 +94,19 @@ module.exports = {
         //Left Channel
         if (oState.channel.members.size === 0) {
           sql.statements.Hostels.getActiveRooms
-            .all({
+            .run({
               channelId: oState.channel.id,
             })
-            .forEach((vc) => {
-              oState.channel.delete().catch(debug.error);
-              sql.statements.Hostels.removeActiveRoom.run({
-                channelId: oState.channel.id,
-              })
-                .catch(e => debug.error(e))
-            });
+            .catch(e => debug.warn(e))
+            .then((res) => {
+              res.rows.forEach((vc) => {
+                oState.channel.delete().catch(e => debug.error(e));
+                sql.statements.Hostels.removeActiveRoom.run({
+                  channelId: oState.channel.id,
+                })
+                  .catch(e => debug.error(e))
+              });
+            })
         }
       }
     },

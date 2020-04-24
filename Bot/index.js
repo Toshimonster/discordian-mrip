@@ -33,9 +33,13 @@ module.exports = class Bot {
       msg.command = (command, callback) => {
         if (
           !msg.author.bot &&
-          msg.content
-            .toLowerCase()
-            .startsWith(`${process.env.PREFIX}${command}`.toLowerCase())
+          (
+            msg.content
+              .toLowerCase()
+              .startsWith(`${process.env.PREFIX}${command} `.toLowerCase()) ||
+            msg.content
+              .toLowerCase() == `${process.env.PREFIX}${command}`.toLowerCase()
+          )
         ) {
           //Is command
           msg.arguments = msg.content.split(" ").slice(1);
@@ -95,8 +99,9 @@ module.exports = class Bot {
   }
 
   parseModules(moduleNames) {
+    console.log(moduleNames)
     moduleNames.forEach((module) => {
-      this.log.info(`Initializing ${module}`);
+      console.log(module)
       this.addModule(module);
     });
   }

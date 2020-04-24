@@ -1,4 +1,5 @@
 const discord = require("discord.js");
+const moment = require("moment")
 const debug = require("log4js").getLogger("Bot:Events");
 debug.level = process.env.DEBUG;
 let Bot;
@@ -24,10 +25,10 @@ let updateEvent = (eventId, member = null) => {
               res.rows.forEach((signup) => {
                 if (signup.alternative) {
                   signups.alternatives.push(
-                    Bot.client.users.fetch(signup.userId)
+                    Bot.client.users.fetch(signup.userid)
                   );
                 } else {
-                  signups.eventees.push(Bot.client.users.fetch(signup.userId));
+                  signups.eventees.push(Bot.client.users.fetch(signup.userid));
                 }
               });
               Promise.all(signups.eventees)
@@ -45,7 +46,7 @@ let updateEvent = (eventId, member = null) => {
                       });
 
                       Bot.client.channels
-                        .fetch(event.channelId)
+                        .fetch(event.channelid)
                         .then((channel) => {
                           channel.messages
                             .fetch(eventId)
@@ -55,12 +56,7 @@ let updateEvent = (eventId, member = null) => {
                               if (!message.embeds[0] && !member)
                                 reject("Member not defined for new message");
 
-                              //From YYYY-DD-MM HH-MM
-                              //To   YYYY-DD-MM HH:MM
-                              let time = event.time;
-                              time = time.split(" ");
-                              time[1] = time[1].replace("-", ":");
-                              time = new Date(time.join(" "));
+                              let time = moment(event.time)
 
                               let embed =
                                 message.embeds[0] ||
@@ -85,15 +81,12 @@ let updateEvent = (eventId, member = null) => {
                                   )
                                   .addField(
                                     "ToBeChanged",
-                                    `Time ${time.toLocaleDateString("en-GB", {
-                                      hour: "numeric",
-                                      minute: "numeric",
-                                    })}`
+                                    `${time.format("Do MMM YYYY h:mm a")}`
                                   );
                               embed.fields[0].value =
                                 users.join(", ") || "None";
                               embed.fields[1].value = alts.join(", ") || "None";
-                              embed.fields[2].name = `${users.length}/${event.maxPlayers}`;
+                              embed.fields[2].name = `${users.length}/${event.maxplayers}`;
                               message
                                 .edit({
                                   content: "",
@@ -147,7 +140,7 @@ module.exports = {
                 channelId: msg.arguments[0],
               }),
             ];
-            Promise.all(sqlPromises).catch(debug.error);
+            Promise.all(sqlPromises).catch(e => debug.error(e));
             msg.channel.tempSend("eventBoard set");
             debug.info(`New eventboard set for ${msg.guild.name}`);
           } else {
@@ -176,7 +169,7 @@ module.exports = {
             }),
           ];
           Promise.all(sqlPromises)
-            .catch(debug.error)
+            .catch(e => debug.error(e))
             .then(() => {
               msg.channel.tempSend("EventBoard removed");
               debug.info(`Removed the eventboard for ${msg.guild.name}`);
@@ -197,33 +190,28 @@ module.exports = {
               msg.channel.tempSend("There is no eventboard in this guild!");
               return;
             }
-            channelId = channelId.channelId;
+            channelId = channelId.channelid;
 
             let member = msg.member;
             let args = msg.arguments.join(" ").split("|");
             let name = args[0] || "No Name Set";
             let description = args[1] || "No Description Set";
-            let timeArgs = args[2].split(" ");
-            let dateTime = timeArgs[0].split("/"); //dd/mm/yyyy
-            let timeStamp = timeArgs[1].split("/"); //hh/mm
-            let time = new Date(
-              Number(dateTime[2]),
-              Number(dateTime[1] - 1),
-              Number(dateTime[0]),
-              Number(timeStamp[0]),
-              Number(timeStamp[1])
-            );
+            let timeArgs = args[2]
+            let time = moment(timeArgs, "DD-MM-YYYY HH:mm A").toDate()
             let maxPlayers = Number(args[3] || 5);
 
             if (isNaN(time)) {
               msg.channel.tempSend(
-                "Invalid Time! Ensure format of `dd/mm/yyyy hh/mm`!"
+                "Invalid Time! Ensure format of `DD-MM-YYYY HH:mm AM/PM`!"
               );
             } else if (isNaN(maxPlayers) || !Number.isInteger(maxPlayers)) {
               msg.channel.tempSend(
                 "Invalid Max Players! Remember to have it as a integer!"
               );
             } else {
+              msg.channel.tempSend(
+                "Event Created!"
+              )
               let channel = msg.guild.channels.resolve(channelId);
               channel
                 .send("Creating Event... <:thonk:700285084900524112>")
@@ -235,13 +223,15 @@ module.exports = {
                       channelId: channel.id,
                       name: name,
                       description: description,
-                      time: `${dateTime[2]}-${dateTime[1]}-${dateTime[0]} ${timeStamp[0]}-${timeStamp[1]}`,
+                      //Time should be DD-MM-YYYY MM:SS AM/PM
+                      time: time,
                       maxPlayers: maxPlayers,
                     })
                     .then(() => {
-                      updateEvent(msg.id, member /*Original member*/);
+                      updateEvent(msg.id, member /*Original member*/)
+                        .catch(e => debug.error(e))
                     })
-                    .catch(debug.error);
+                    .catch(e => debug.error(e));
                 });
             }
           });
@@ -255,15 +245,19 @@ module.exports = {
           .run({
             messageId: reaction.message.id,
           })
-          .catch(debug.error)
+          .catch(e => debug.error(e))
           .then((res) => {
             res.rows.forEach(() => {
               Bot.sql.statements.Events.addSignup.run({
                 userId: user.id,
                 eventId: reaction.message.id,
-              });
-              updateEvent(reaction.message.id);
-              debug.info("Added event user");
+              })
+                .catch(e => debug.error(e))
+                .then(() => {
+                  updateEvent(reaction.message.id)
+                    .catch(e => debug.error(e))
+                  debug.info("Added event user");
+                })
             });
           });
       }
@@ -276,15 +270,19 @@ module.exports = {
           .run({
             messageId: reaction.message.id,
           })
-          .catch(debug.error)
+          .catch(e => debug.error(e))
           .then((res) => {
             res.rows.forEach(() => {
               Bot.sql.statements.Events.removeSignup.run({
                 userId: user.id,
                 eventId: reaction.message.id,
-              });
-              updateEvent(reaction.message.id);
-              debug.info("Removed event user");
+              })
+                .catch(e => debug.error(e))
+                .then(() => {
+                  updateEvent(reaction.message.id)
+                    .catch(e => debug.error(e))
+                  debug.info("Removed event user");
+                })
             });
           });
       }
@@ -295,10 +293,10 @@ module.exports = {
         res.rows.forEach((event) => {
           try {
             Bot.client.channels
-              .fetch(event.channelId)
+              .fetch(event.channelid)
               .then((c) => {
                 c.messages
-                  .fetch(event.messageId)
+                  .fetch(event.messageid)
                   .then((msg) => {
                     let reaction = msg.reactions.resolve("➕");
                     reaction.users
@@ -309,38 +307,39 @@ module.exports = {
                           Bot.sql.statements.Events.addSignup
                             .run({
                               userId: user.id,
-                              eventId: event.messageId,
+                              eventId: event.messageid,
                             })
-                            .catch(debug.error)
+                            .catch(e => debug.error(e))
                             .then(() => {
                               debug.info(
-                                `Adding old reactor ${user.id} to event ${event.messageId}`
+                                `Adding old reactor ${user.id} to event ${event.messageid}`
                               );
                             });
                         });
-                        let removedUsers = [];
                         Bot.sql.statements.Events.getSignups
                           .run({
-                            eventId: event.messageId,
+                            eventId: event.messageid,
                           })
-                          .catch(debug.error)
+                          .catch(e => debug.error(e))
                           .then((res) => {
                             let sqlPromises = [];
                             res.rows.forEach((signup) => {
-                              if (!users.has(signup.userId)) {
+                              if (!users.has(signup.userid)) {
+
                                 sqlPromises.push(
                                   Bot.sql.statements.Events.removeSignup.run({
-                                    userId: signup.userId,
-                                    eventId: event.messageId,
+                                    userId: signup.userid,
+                                    eventId: event.messageid,
                                   })
                                 );
                               }
                             });
                             Promise.all(sqlPromises)
                               .then(() => {
-                                updateEvent(event.messageId);
+                                updateEvent(event.messageid)
+                                  .catch(e => debug.error(e));
                               })
-                              .catch(debug.error);
+                              .catch(e => debug.error(e));
                           });
                       })
                       .catch((e) => debug.warn(e));
@@ -353,7 +352,7 @@ module.exports = {
               })
               .catch((e) =>
                 debug.warn(
-                  `Could not find channel! Assuming it has been deleted.${e.msg}`
+                  `Could not find channel! Assuming it has been deleted. ${e}`
                 )
               );
           } catch (e) {
@@ -374,22 +373,22 @@ module.exports = {
       let events = {};
       Bot.sql.statements.Events.getExpiredEvents
         .run()
-        .catch(debug.error)
+        .catch(e => debug.error(e))
         .then((res) => {
           res.rows.forEach((event) => {
-            if (!events[event.messageId])
-              events[event.messageId] = {
+            if (!events[event.messageid])
+              events[event.messageid] = {
                 name: event.name,
-                channelId: event.eventBoardId,
+                channelId: event.eventboardid,
                 joined: [],
                 alts: [],
               };
-            if (event.userId) {
+            if (event.userid) {
               //If exists
               if (event.alternative) {
-                events[event.messageId].alts.push(`<@${event.userId}>`);
+                events[event.messageid].alts.push(`<@${event.userid}>`);
               } else {
-                events[event.messageId].joined.push(`<@${event.userId}>`);
+                events[event.messageid].joined.push(`<@${event.userid}>`);
               }
             }
           });

@@ -1,12 +1,11 @@
-INSERT
-  OR IGNORE INTO events_signups (userId, eventId, alternative)
+INSERT INTO events_signups (userId, eventId, alternative)
 VALUES
   (
     $userId,
     $eventId,
     (
       SELECT
-        IFNULL(
+        COALESCE(
           COUNT(userId),
           0
         ) >= (
@@ -21,3 +20,4 @@ VALUES
         eventId = $eventId
     )
   )
+  ON CONFLICT(userId, eventId) DO NOTHING;

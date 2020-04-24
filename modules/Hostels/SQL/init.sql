@@ -36,4 +36,4 @@ INSERT INTO help_commands (
     'remove all hostels in the guild',
     'removeHostel',
     'Hostels'
-) ON CONFLICT(moduleName) DO NOTHING;
+) ON CONFLICT(commandName) DO NOTHING;

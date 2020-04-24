@@ -2,6 +2,9 @@
   "modules": [
     "Example",
     "Help",
-    "Events"
+    "Events",
+    "Hostels",
+    "Moderation",
+    "Receptions"
   ]
 }

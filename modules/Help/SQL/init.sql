@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS help_commands (
     moduleName VARCHAR(20)
 );
 
-DELETE FROM help_help;
-DELETE FROM help_commands;
-
 --Help command
 INSERT INTO help_help (
     moduleName,
